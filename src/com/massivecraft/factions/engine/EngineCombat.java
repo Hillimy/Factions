@@ -84,9 +84,9 @@ public class EngineCombat extends Engine
 	}
 
 	// Utility method used in "canCombatDamageHappen" below.
-	public static boolean falseUnlessDisallowedPvpEventCancelled(Player attacker, Player defender, EntityDamageByEntityEvent event)
+	public static boolean falseUnlessDisallowedPvpEventCancelled(Player attacker, Player defender, DisallowCause reason, EntityDamageByEntityEvent event)
 	{
-		EventFactionsPvpDisallowed dpe = new EventFactionsPvpDisallowed(attacker, defender, event);
+		EventFactionsPvpDisallowed dpe = new EventFactionsPvpDisallowed(attacker, defender, reason, event);
 		dpe.run();
 		return dpe.isCancelled();
 	}
@@ -123,11 +123,11 @@ public class EngineCombat extends Engine
 			{
 				// No attacker?
 				// Let's behave as if it were a player
-				return falseUnlessDisallowedPvpEventCancelled(null, defender, event);
+				return falseUnlessDisallowedPvpEventCancelled(null, defender, DisallowCause.PEACEFUL_LAND, event);
 			}
 			if (MUtil.isPlayer(eattacker))
 			{
-				ret = falseUnlessDisallowedPvpEventCancelled((Player)eattacker, defender, event);
+				ret = falseUnlessDisallowedPvpEventCancelled((Player)eattacker, defender, DisallowCause.PEACEFUL_LAND, event);
 				if (!ret && notify)
 				{
 					MPlayer attacker = MPlayer.get(eattacker);
@@ -155,7 +155,7 @@ public class EngineCombat extends Engine
 		// NOTE: This check is probably not that important but we could keep it anyways.
 		if (attackerPsFaction.getFlag(MFlag.getFlagPvp()) == false)
 		{
-			ret = falseUnlessDisallowedPvpEventCancelled(attacker, defender, event);
+			ret = falseUnlessDisallowedPvpEventCancelled(attacker, defender, DisallowCause.PEACEFUL_LAND, event);
 			if (!ret && notify) uattacker.msg("<i>PVP is disabled in %s.", attackerPsFaction.describeTo(uattacker));
 			return ret;
 		}
@@ -168,7 +168,7 @@ public class EngineCombat extends Engine
 
 		if (attackFaction.isNone() && MConf.get().disablePVPForFactionlessPlayers)
 		{
-			ret = falseUnlessDisallowedPvpEventCancelled(attacker, defender, event);
+			ret = falseUnlessDisallowedPvpEventCancelled(attacker, defender, DisallowCause.FACTIONLESS, event);
 			if (!ret && notify) uattacker.msg("<i>You can't hurt other players until you join a faction.");
 			return ret;
 		}
@@ -181,7 +181,7 @@ public class EngineCombat extends Engine
 			}
 			else if (MConf.get().disablePVPForFactionlessPlayers)
 			{
-				ret = falseUnlessDisallowedPvpEventCancelled(attacker, defender, event);
+				ret = falseUnlessDisallowedPvpEventCancelled(attacker, defender, DisallowCause.FACTIONLESS, event);
 				if (!ret && notify) uattacker.msg("<i>You can't hurt players who are not currently in a faction.");
 				return ret;
 			}
@@ -197,7 +197,7 @@ public class EngineCombat extends Engine
 		// Check the relation
 		if (relation.isFriend() && defenderPsFaction.getFlag(MFlag.getFlagFriendlyire()) == false)
 		{
-			ret = falseUnlessDisallowedPvpEventCancelled(attacker, defender, event);
+			ret = falseUnlessDisallowedPvpEventCancelled(attacker, defender, DisallowCause.FRIENDLYFIRE, event);
 			if (!ret && notify) uattacker.msg("<i>You can't hurt %s<i>.", relation.getDescPlayerMany());
 			return ret;
 		}
@@ -207,7 +207,7 @@ public class EngineCombat extends Engine
 		
 		if (mdefender.hasFaction() && ownTerritory && relation == Rel.NEUTRAL)
 		{
-			ret = falseUnlessDisallowedPvpEventCancelled(attacker, defender, event);
+			ret = falseUnlessDisallowedPvpEventCancelled(attacker, defender, DisallowCause.OWN_TERRITORY, event);
 			if (!ret && notify)
 			{
 				uattacker.msg("<i>You can't hurt %s<i> in their own territory unless you declare them as an enemy.", mdefender.describeTo(uattacker));
